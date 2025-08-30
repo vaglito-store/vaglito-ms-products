@@ -23,9 +23,9 @@ You can just fork or clone this repository and use it as is.
 
 To run this project, you will need to add the following environment variables to your .env file
 
-`DB_USER`
-`DB_NAME`
-`DB_PASSWORD`
-`DB_HOST`
+- `DB_USER`
+- `DB_NAME`
+- `DB_PASSWORD`
+- `DB_HOST`
 
 
