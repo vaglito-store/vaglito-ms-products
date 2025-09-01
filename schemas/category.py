@@ -1,13 +1,13 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class CategoryBase(BaseModel):
-    name: str
+    id: int
+    name: str = Field(..., description="Category name (required)")
 
-class CategoryCreate(CategoryBase):
-    pass
+class CategoryCreate(BaseModel):
+    name: str = Field(..., description="Category name (required)")
 
 class Category(CategoryBase):
-    id: int
 
     class Config:
         orm_mode = True
