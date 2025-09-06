@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-
 from settings.database import get_db
 from models.category import Category
 from schemas import category
@@ -22,15 +21,21 @@ def get_categories(db: Session = Depends(get_db)):
 @router.get("/{category_id}", response_model=category.Category)
 def get_category(category_id: int, db: Session = Depends(get_db)):
     category = db.query(Category).filter(Category.id == category_id).first()
-    if not brand:
+    if not category:
         raise HTTPException(
             status_code=404,
             detail="Category not found"
         )
 
 # Create Category
-@router.post("/", response_model=category.CategoryCreate, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=category.Category, status_code=status.HTTP_201_CREATED)
 def create_category(category: category.CategoryCreate, db: Session = Depends(get_db)):
+    existing_category = db.query(Category).filter_by(name=category.name).first()
+    if existing_category:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Category '{category.name}' already exists"
+        )
     new_category = Category(**category.dict())
     db.add(new_category)
     db.commit()

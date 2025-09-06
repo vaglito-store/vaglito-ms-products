@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -26,25 +27,31 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(
             status_code=404,
-            detail="Product not found"
+            detail="Product not found."
         )
     return product
 
 # Create Product
-@router.post("/", response_model=product.ProductCreate, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=product.Product, status_code=status.HTTP_201_CREATED)
 def create_product(product: product.ProductCreate, db: Session = Depends(get_db)):
     db_brand = db.query(Brand).filter(Brand.id == product.brand_id).first()
     db_category = db.query(Category).filter(Category.id == product.category_id).first()
+    existing_product = db.query(Product).filter_by(name=product.name).first()
 
+    if existing_product:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Product '{product.name}' already exists."
+        )
     if not db_brand:
         raise HTTPException(
             status_code=404,
-            detail="Brand not found"
+            detail="Brand not found."
         )
     if not db_category:
         raise HTTPException(
             status_code=404,
-            detail="Brand not found"
+            detail="Brand not found."
         )
 
     new_product = Product(**product.dict())
@@ -54,21 +61,21 @@ def create_product(product: product.ProductCreate, db: Session = Depends(get_db)
     return new_product
 
 # Update Product
-@router.put("/{product_id}", response_model=product.Product)
-def update_product(product_id: int, update_product: product.Product, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.id == product_id).first()
-    if not product:
+@router.put("/{product_id}")
+def update_product(product_id: int, update_product: product.ProductUpdate, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id)
+    if not product.first():
         raise HTTPException(
             status_code=404,
-            detail="Product not found"
+            detail=f"Product '{product_id}' not found."
         )
-
-    for key, value in update_product.dict().items():
-        setattr(product, key, value)
-
+    update_data = update_product.dict(exclude_unset=True)
+    product.update(update_data)
     db.commit()
-    db.refresh(product)
-    return product
+    return {
+        "product": product_id,
+        "update": update_data
+    }
 
 # Delete product
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -83,5 +90,5 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     db.delete(product)
     db.commit()
     return {
-        "message": "Product deleted sucessfully"
+        "message": f"Product deleted sucessfully."
     }

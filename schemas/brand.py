@@ -1,13 +1,13 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class BrandBase(BaseModel):
+    id: int
     name: str
 
-class BrandCreate(BrandBase):
-    pass
+class BrandCreate(BaseModel):
+    name: str = Field(..., description="Brand name (required)")
 
 class Brand(BrandBase):
-    id: int
 
     class Config:
         orm_mode = True
